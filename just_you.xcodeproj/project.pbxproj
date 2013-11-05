@@ -23,7 +23,6 @@
 		90EF54261825B36F00A4C977 /* libaubio.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 90EF541F1825B36F00A4C977 /* libaubio.a */; };
 		90EF54271825B36F00A4C977 /* ofxAudioDeviceControl.mm in Sources */ = {isa = PBXBuildFile; fileRef = 90EF54231825B36F00A4C977 /* ofxAudioDeviceControl.mm */; };
 		90EF54281825B36F00A4C977 /* ofxAudioFeaturesChannel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 90EF54241825B36F00A4C977 /* ofxAudioFeaturesChannel.cpp */; };
-		90EF542B1825B42500A4C977 /* ofxAudioUnitSplitter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 90EF54291825B42500A4C977 /* ofxAudioUnitSplitter.cpp */; };
 		BBAB23CB13894F3D00AA2426 /* GLUT.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = BBAB23BE13894E4700AA2426 /* GLUT.framework */; };
 		E4328149138ABC9F0047C5CB /* openFrameworksDebug.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E4328148138ABC890047C5CB /* openFrameworksDebug.a */; };
 		E45BE97B0E8CC7DD009D7055 /* AGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E45BE9710E8CC7DD009D7055 /* AGL.framework */; };
@@ -159,8 +158,6 @@
 		90EF54231825B36F00A4C977 /* ofxAudioDeviceControl.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ofxAudioDeviceControl.mm; sourceTree = "<group>"; };
 		90EF54241825B36F00A4C977 /* ofxAudioFeaturesChannel.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ofxAudioFeaturesChannel.cpp; sourceTree = "<group>"; };
 		90EF54251825B36F00A4C977 /* ofxAudioFeaturesChannel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ofxAudioFeaturesChannel.h; sourceTree = "<group>"; };
-		90EF54291825B42500A4C977 /* ofxAudioUnitSplitter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ofxAudioUnitSplitter.cpp; path = ../../../addons/ofxAudioUnit/src/ofxAudioUnitSplitter.cpp; sourceTree = "<group>"; };
-		90EF542A1825B42500A4C977 /* ofxAudioUnitSplitter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ofxAudioUnitSplitter.h; path = ../../../addons/ofxAudioUnit/src/ofxAudioUnitSplitter.h; sourceTree = "<group>"; };
 		921304abbee9bbad134368987c452278 /* ofxAudioUnitInput.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 30; name = ofxAudioUnitInput.cpp; path = ../../../addons/ofxAudioUnit/src/ofxAudioUnitInput.cpp; sourceTree = SOURCE_ROOT; };
 		9aba70779062f057766bc5de660295e8 /* ofxAudioUnitHardwareUtils.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 30; name = ofxAudioUnitHardwareUtils.cpp; path = ../../../addons/ofxAudioUnit/src/ofxAudioUnitHardwareUtils.cpp; sourceTree = SOURCE_ROOT; };
 		BBAB23BE13894E4700AA2426 /* GLUT.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLUT.framework; path = ../../../libs/glut/lib/osx/GLUT.framework; sourceTree = "<group>"; };
@@ -264,8 +261,6 @@
 			isa = PBXGroup;
 			children = (
 				1f4b8f73512f75dcabf5da500cc2b4fb /* CAPublicUtility */,
-				90EF54291825B42500A4C977 /* ofxAudioUnitSplitter.cpp */,
-				90EF542A1825B42500A4C977 /* ofxAudioUnitSplitter.h */,
 				2dc2346096c29d44d4517679d9de2c6c /* ofxAudioUnit.cpp */,
 				f8adfb6685b4886f48e323a680624f0d /* ofxAudioUnit.h */,
 				b4488a9492c5f3eb4812290733f82999 /* ofxAudioUnitBase.h */,
@@ -680,7 +675,6 @@
 				a1d93b3b282e51fd3ded53133a442174 /* ofxAudioUnitInput.cpp in Sources */,
 				0906c2d4d2bbec054b2d5ba575b25d06 /* ofxAudioUnitMatrixMixer.cpp in Sources */,
 				d5d5c8479c1c2a462955a2eccb1dbe2a /* ofxAudioUnitMidi.cpp in Sources */,
-				90EF542B1825B42500A4C977 /* ofxAudioUnitSplitter.cpp in Sources */,
 				71239fabd9dd8dade3e2eff959fb267b /* ofxAudioUnitMixer.cpp in Sources */,
 				c0a1f9451231b08dccffc838143dfcfa /* ofxAudioUnitNetReceive.cpp in Sources */,
 				250a710d8814bf6d345b0877aa3e879b /* ofxAudioUnitNetSend.cpp in Sources */,
@@ -786,6 +780,7 @@
 		E4B69B600A3A1757003C02F2 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -795,6 +790,7 @@
 				FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../../libs/glut/lib/osx\"";
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INPUT_FILETYPE = sourcecode.cpp.objcpp;
 				GCC_MODEL_TUNING = NONE;
 				ICON = "$(ICON_NAME_DEBUG)";
 				ICON_FILE = "$(ICON_FILE_PATH)$(ICON)";
@@ -865,6 +861,7 @@
 					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_52)",
 					/Users/jasonlevine/Code/of_v0.8.0_osx_release/addons/ofxAudioFeatures/libs/aubio/lib/osx,
 				);
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				PRODUCT_NAME = "$(TARGET_NAME)Debug";
 				WRAPPER_EXTENSION = app;
 			};
@@ -873,6 +870,7 @@
 		E4B69B610A3A1757003C02F2 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -881,6 +879,7 @@
 				);
 				FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../../libs/glut/lib/osx\"";
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INPUT_FILETYPE = sourcecode.cpp.objcpp;
 				GCC_MODEL_TUNING = NONE;
 				ICON = "$(ICON_NAME_RELEASE)";
 				ICON_FILE = "$(ICON_FILE_PATH)$(ICON)";
@@ -951,6 +950,7 @@
 					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_51)",
 					/Users/jasonlevine/Code/of_v0.8.0_osx_release/addons/ofxAudioFeatures/libs/aubio/lib/osx,
 				);
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = app;
 			};

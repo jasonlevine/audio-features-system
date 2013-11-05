@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>94AC5433-7181-441D-86B3-9E47CB282751</string>
+	<key>IDESourceControlProjectName</key>
+	<string>just_you</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>56E17126-0E22-415B-A948-1708023E6197</key>
+		<string>https://github.com/jasonlevine/audio-features-system.git</string>
+		<key>C27118CC-7B3D-4F3B-BFDC-F49348CAFC24</key>
+		<string>https://github.com/admsyn/ofxAudioUnit.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>just_you.xcodeproj/project.xcworkspace</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>56E17126-0E22-415B-A948-1708023E6197</key>
+		<string>../..</string>
+		<key>C27118CC-7B3D-4F3B-BFDC-F49348CAFC24</key>
+		<string>../../../../../addons/ofxAudioUnit</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>https://github.com/jasonlevine/audio-features-system.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>110</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>56E17126-0E22-415B-A948-1708023E6197</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>56E17126-0E22-415B-A948-1708023E6197</string>
+			<key>IDESourceControlWCCName</key>
+			<string>just_you</string>
+		</dict>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>C27118CC-7B3D-4F3B-BFDC-F49348CAFC24</string>
+			<key>IDESourceControlWCCName</key>
+			<string>ofxAudioUnit</string>
+		</dict>
+	</array>
+</dict>
+</plist>
