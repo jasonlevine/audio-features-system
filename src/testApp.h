@@ -14,12 +14,15 @@ public:
     void update();
     void draw();
     
-    
-    void setupAudio();
     void setupVectors();
     void loadTracks();
     void setupAUGraph();
-    void updateAudio();
+    void playStems();
+    
+    void updateAnalytics();
+    void findMinMax(int track);
+    void recordPitchData(int track);
+    
     //draw analytics
     void selectMode(int track, float height);
     void drawWaveForms(int track, float height);

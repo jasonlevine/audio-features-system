@@ -3,137 +3,13 @@
 
 //--------------------------------------------------------------
 void testApp::setup(){
-    setupComplete = false;
     
-    amp.assign(NUMTRACKS, 0.0);
-    dB.assign(NUMTRACKS, 0.0);
-    stemNames.assign(NUMTRACKS, "");
-    
-    vector<float> fftValues;
-    fftValues.assign(512, 0);
-    
-    vector<float> volValues;
-    volValues.assign(ofGetWidth() -200, 0);
-    
-    for ( int i = 0; i < NUMTRACKS; i++ ) {
-        ofxAudioUnitFilePlayer * stem = new ofxAudioUnitFilePlayer();
-        stems.push_back(stem);
-        
-        ofxAudioUnitTap * tap = new ofxAudioUnitTap();
-        taps.push_back(tap);
-        
-        ofxAudioUnitFftNode * fft = new ofxAudioUnitFftNode();
-        ffts.push_back(fft);
-        
-        ofxAudioFeaturesChannel * channel = new ofxAudioFeaturesChannel();
-        channel->setup(512, 64, 44100);
-        channel->usingPitch = true;
-        audioFeatures.push_back(channel);
-        
-        ofPolyline temp;
-        waves.push_back(temp);
-        
-        dBHistory.push_back(volValues);
-        ampHistory.push_back(volValues);
-        pitchHistory.push_back(volValues);
-    }
-    
-    for (int i = 0; i < NUMTRACKS; i++) {
-        vector<float> temp;
-        temp.assign(7,0);
-        medianFilter.push_back(temp);
-    }
-    
-    mode = 1;
-    selectedTrack = -1;
-    
-    
-    //vox
-    stems[0]->setFile(ofFilePath::getAbsolutePath("STEMS/bgVox.wav"));
-    stemNames[0] = "vox";
-    //bgVox
-    stems[1]->setFile(ofFilePath::getAbsolutePath("STEMS/vox.wav")); //vox-lowpass.aiff
-    stemNames[1] = "bgVox";
-    //beats
-    stems[2]->setFile(ofFilePath::getAbsolutePath("STEMS/beats.wav"));
-    stemNames[2] = "beats";
-    //bass
-    stems[3]->setFile(ofFilePath::getAbsolutePath("STEMS/bass.wav"));
-    stemNames[3] = "bass";
-    //moog
-    stems[4]->setFile(ofFilePath::getAbsolutePath("STEMS/moog.wav"));
-    stemNames[4] = "moog";
-    //gtr
-    stems[5]->setFile(ofFilePath::getAbsolutePath("STEMS/gtr.wav"));
-    stemNames[5] = "gtr";
-    //gtr solo
-    stems[6]->setFile(ofFilePath::getAbsolutePath("STEMS/gtrSolo.wav"));
-    stemNames[6] = "gtrSolo";
-    
-    
-    mixer.setInputBusCount(7);
-    
-    
-    for ( int i = 0; i < NUMTRACKS; i++ ) {
-        stems[i]->connectTo(*taps[i]);
-        (*taps[i]).connectTo(mixer, i);
-//        stems[i]->connectTo(mixer, i);
-        mixer.setInputVolume(1.0, i);
-        mixer.enableInputMetering(i);
-    }
-    
-    mixer.connectTo(output);
-    output.start();
-    
-    for ( int i = 0; i < NUMTRACKS; i++ ) {
-        stems[i]->prime();
-    }
-    
-    
-
-
-
-    for ( int i = 0; i < NUMTRACKS; i++ ) {
-        stems[i]->play();
-    }
-    
-    stems[0]->play();
-    stems[1]->play();
-    stems[2]->play();
-    stems[3]->play();
-    stems[4]->play();
-    stems[5]->play();
-    stems[6]->play();
-
-    
-    //analytics
-    maxdB.assign(NUMTRACKS, -120);
-    maxAmp.assign(NUMTRACKS, 0);
-    maxfft.assign(NUMTRACKS, 0);
-    maxPitch.assign(NUMTRACKS, 0);
-    
-    xml.load("dataMinMax.xml");
-    
-    xml.setTo("limits");
-    
-    for (int i = 0; i < NUMTRACKS; i++) {
-        string tag = "track-" + ofToString(i);
-        xml.setTo(tag);
-        
-        maxAmp[i] = ofToFloat(xml.getValue("maxAmp"));
-        maxdB[i] = ofToFloat(xml.getValue("maxdB"));
-        maxfft[i] = ofToFloat(xml.getValue("maxfft"));
-        maxPitch[i] = ofToFloat(xml.getValue("maxPitch"));
-        
-        xml.setToParent();
-    }
-//    xml.addChild("root");
-//    xml.setTo("root");
-    
+    setupVectors();
+    loadTracks();
+    setupAUGraph();
+    playStems();
     
     //graphics
-    
-    
     shader.load("shadersGL3/shader");
     
     fbo.allocate(1440, 900, GL_RGBA32F_ARB);
@@ -149,70 +25,8 @@ void testApp::setup(){
 
 //--------------------------------------------------------------
 void testApp::update(){
-    if( setupComplete ) {
-        for ( int i = 0; i < NUMTRACKS; i++ ) {
-            
-            //volume
-            float waveformSize = (selectedTrack == -1) ? ofGetHeight()/NUMTRACKS : ofGetHeight();
-            taps[i]->getLeftWaveform(waves[i], ofGetWidth(), waveformSize);///NUMTRACKS
-            dB[i] = mixer.getInputLevel(i);
-            amp[i] = taps[i]->getRMS(0);
-            
-            dBHistory[i].push_back(dB[i]);
-            if (dBHistory[i].size() > ofGetWidth() - 200) dBHistory[i].erase(dBHistory[i].begin());
-            
-            ampHistory[i].push_back(amp[i]);
-            if (ampHistory[i].size() > ofGetWidth() - 200) ampHistory[i].erase(ampHistory[i].begin());
-            
-            //audio features
-            taps[i]->getSamples(audioFeatures[i]->inputBuffer);
-            audioFeatures[i]->process(0);
-            
-            medianFilter[i].push_back(audioFeatures[i]->pitch);
-            medianFilter[i].erase(medianFilter[i].begin());
-            vector<float> MFSorted = medianFilter[i];
-            ofSort(MFSorted);
-            pitchHistory[i].push_back(MFSorted[3]);
-            if (pitchHistory[i].size() > ofGetWidth() - 200) pitchHistory[i].erase(pitchHistory[i].begin());
-            
-            
-            // min max
-            /*
-            if (amp[i] > maxAmp[i]) maxAmp[i] = amp[i];
-            else if (amp[i] < minAmp[i]) minAmp[i] = amp[i];
-            
-            if (dB[i] > maxdB[i]) maxdB[i] = dB[i];
-            else if (dB[i] < mindB[i]) mindB[i] = dB[i];
-            
-            for (int j = 0; j < audioFeatures[i]->spectrum.size(); j++){
-                float bin = audioFeatures[i]->spectrum[j];
-                if (bin > maxfft[i]) maxfft[i] = bin;
-                else if (bin < minfft[i]) minfft[i] = bin;
-            }
-            
-            float pitch = pitchHistory[i][pitchHistory.size()-1];
-            if (pitch > maxPitch[i]) maxPitch[i] = pitch;
-            else if (pitch < minPitch[i]) minPitch[i] = pitch;
-            */
-            //XML
-//            float amplitude = taps[1]->getRMS(0);
-//            if (i == 1 && amplitude != 0) { //
-//                ofXml frame;
-//                string child = "frame-" + ofToString(ofGetFrameNum);
-//                frame.addChild(child);
-//                frame.setTo(child);
-//                
-//                frame.addValue("pitch", audioFeatures[1]->pitch);
-//                frame.addValue("amplitude", taps[1]->getRMS(0));
-//                
-//                xml.addXml(frame);
-//            }
-            
-                
-
-
-        }
-    }
+    updateAnalytics();
+   
     
     //graphics
 //    float sineWave = (sin(ofGetElapsedTimef()/4) + 1) / 2;
@@ -253,6 +67,203 @@ void testApp::draw(){
 //    faucet.drawString(output, ofGetWidth() - 480, 20);
 }
 
+/////////////////////////////////SETUP//////////////////////////////////
+
+//--------------------------------------------------------------
+void testApp::setupVectors(){
+    
+    amp.assign(NUMTRACKS, 0.0);
+    dB.assign(NUMTRACKS, 0.0);
+    stemNames.assign(NUMTRACKS, "");
+    
+    vector<float> fftValues;
+    fftValues.assign(512, 0);
+    
+    vector<float> volValues;
+    volValues.assign(ofGetWidth() -200, 0);
+    
+    for ( int i = 0; i < NUMTRACKS; i++ ) {
+        ofxAudioUnitFilePlayer * stem = new ofxAudioUnitFilePlayer();
+        stems.push_back(stem);
+        
+        ofxAudioUnitTap * tap = new ofxAudioUnitTap();
+        taps.push_back(tap);
+        
+        ofxAudioUnitFftNode * fft = new ofxAudioUnitFftNode();
+        ffts.push_back(fft);
+        
+        ofxAudioFeaturesChannel * channel = new ofxAudioFeaturesChannel();
+        channel->setup(512, 64, 44100);
+        channel->usingPitch = true;
+        audioFeatures.push_back(channel);
+        
+        ofPolyline temp;
+        waves.push_back(temp);
+        
+        dBHistory.push_back(volValues);
+        ampHistory.push_back(volValues);
+        pitchHistory.push_back(volValues);
+    }
+    
+    for (int i = 0; i < NUMTRACKS; i++) {
+        vector<float> temp;
+        temp.assign(7,0);
+        medianFilter.push_back(temp);
+    }
+    
+    //analytics
+    maxdB.assign(NUMTRACKS, -120);
+    maxAmp.assign(NUMTRACKS, 0);
+    maxfft.assign(NUMTRACKS, 0);
+    maxPitch.assign(NUMTRACKS, 0);
+    
+    xml.load("dataMinMax.xml");
+    xml.setTo("limits");
+    
+    for (int i = 0; i < NUMTRACKS; i++) {
+        string tag = "track-" + ofToString(i);
+        xml.setTo(tag);
+        
+        maxAmp[i] = ofToFloat(xml.getValue("maxAmp"));
+        maxdB[i] = ofToFloat(xml.getValue("maxdB"));
+        maxfft[i] = ofToFloat(xml.getValue("maxfft"));
+        maxPitch[i] = ofToFloat(xml.getValue("maxPitch"));
+        
+        xml.setToParent();
+    }
+    
+    mode = 1;
+    selectedTrack = -1;
+}
+
+//--------------------------------------------------------------
+void testApp::loadTracks(){
+    //vox
+    stems[0]->setFile(ofFilePath::getAbsolutePath("STEMS/bgVox.wav"));
+    stemNames[0] = "vox";
+    //bgVox
+    stems[1]->setFile(ofFilePath::getAbsolutePath("STEMS/vox.wav")); //vox-lowpass.aiff
+    stemNames[1] = "bgVox";
+    //beats
+    stems[2]->setFile(ofFilePath::getAbsolutePath("STEMS/beats.wav"));
+    stemNames[2] = "beats";
+    //bass
+    stems[3]->setFile(ofFilePath::getAbsolutePath("STEMS/bass.wav"));
+    stemNames[3] = "bass";
+    //moog
+    stems[4]->setFile(ofFilePath::getAbsolutePath("STEMS/moog.wav"));
+    stemNames[4] = "moog";
+    //gtr
+    stems[5]->setFile(ofFilePath::getAbsolutePath("STEMS/gtr.wav"));
+    stemNames[5] = "gtr";
+    //gtr solo
+    stems[6]->setFile(ofFilePath::getAbsolutePath("STEMS/gtrSolo.wav"));
+    stemNames[6] = "gtrSolo";
+}
+
+//--------------------------------------------------------------
+void testApp::setupAUGraph(){
+    mixer.setInputBusCount(NUMTRACKS);
+    
+    for ( int i = 0; i < NUMTRACKS; i++ ) {
+        stems[i]->connectTo(*taps[i]);
+        (*taps[i]).connectTo(mixer, i);
+        mixer.setInputVolume(1.0, i);
+        mixer.enableInputMetering(i);
+    }
+    
+    mixer.connectTo(output);
+    output.start();
+}
+
+//--------------------------------------------------------------
+void testApp::playStems(){
+    for ( int i = 0; i < NUMTRACKS; i++ ) {
+        stems[i]->prime();
+    }
+    
+    for ( int i = 0; i < NUMTRACKS; i++ ) {
+        stems[i]->play();
+    }
+    
+    stems[0]->play();
+    stems[1]->play();
+    stems[2]->play();
+    stems[3]->play();
+    stems[4]->play();
+    stems[5]->play();
+    stems[6]->play();
+}
+
+
+///////////////////////////UPDATE//////////////////////////
+//--------------------------------------------------------------
+void testApp::updateAnalytics(){
+    for ( int i = 0; i < NUMTRACKS; i++ ) {
+        
+        //volume
+        float waveformSize = (selectedTrack == -1) ? ofGetHeight()/NUMTRACKS : ofGetHeight();
+        taps[i]->getLeftWaveform(waves[i], ofGetWidth(), waveformSize);///NUMTRACKS
+        dB[i] = mixer.getInputLevel(i);
+        amp[i] = taps[i]->getRMS(0);
+        
+        dBHistory[i].push_back(dB[i]);
+        if (dBHistory[i].size() > ofGetWidth() - 200) dBHistory[i].erase(dBHistory[i].begin());
+        
+        ampHistory[i].push_back(amp[i]);
+        if (ampHistory[i].size() > ofGetWidth() - 200) ampHistory[i].erase(ampHistory[i].begin());
+        
+        
+        //audio features
+        taps[i]->getSamples(audioFeatures[i]->inputBuffer);
+        audioFeatures[i]->process(0);
+        
+        medianFilter[i].push_back(audioFeatures[i]->pitch);
+        medianFilter[i].erase(medianFilter[i].begin());
+        vector<float> MFSorted = medianFilter[i];
+        ofSort(MFSorted);
+        pitchHistory[i].push_back(MFSorted[3]);
+        if (pitchHistory[i].size() > ofGetWidth() - 200) pitchHistory[i].erase(pitchHistory[i].begin());
+    }
+
+}
+
+//--------------------------------------------------------------
+void testApp::findMinMax(int track){
+    
+    if (amp[track] > maxAmp[track]) maxAmp[track] = amp[track];
+    if (dB[track] > maxdB[track]) maxdB[track] = dB[track];
+    
+    for (int j = 0; j < audioFeatures[track]->spectrum.size(); j++){
+        float bin = audioFeatures[track]->spectrum[j];
+        if (bin > maxfft[track]) maxfft[track] = bin;
+    }
+    
+    float pitch = pitchHistory[track][pitchHistory.size()-1];
+    if (pitch > maxPitch[track]) maxPitch[track] = pitch;
+}
+
+//--------------------------------------------------------------
+void testApp::recordPitchData(int track){
+
+    if (amp[track] != 0) { //
+        ofXml frame;
+        string child = "frame-" + ofToString(ofGetFrameNum);
+        frame.addChild(child);
+        frame.setTo(child);
+        
+        frame.addValue("pitch", pitchHistory[track][pitchHistory.size()-1]);
+        frame.addValue("amplitude", amp[track]);
+        
+        xml.addXml(frame);
+    }
+
+}
+
+
+
+
+///////////////////////////DRAW/////////////////////////////
 //--------------------------------------------------------------
 void testApp::selectMode(int track, float height){
     switch (mode) {
