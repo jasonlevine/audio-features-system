@@ -38,6 +38,12 @@ void testApp::setup(){
         pitchHistory.push_back(volValues);
     }
     
+    for (int i = 0; i < NUMTRACKS; i++) {
+        vector<float> temp;
+        temp.assign(7,0);
+        medianFilter.push_back(temp);
+    }
+    
     mode = 1;
     selectedTrack = -1;
     
@@ -46,7 +52,7 @@ void testApp::setup(){
     stems[0]->setFile(ofFilePath::getAbsolutePath("STEMS/bgVox.wav"));
     stemNames[0] = "vox";
     //bgVox
-    stems[1]->setFile(ofFilePath::getAbsolutePath("STEMS/vox.wav"));
+    stems[1]->setFile(ofFilePath::getAbsolutePath("STEMS/vox.wav")); //vox-lowpass.aiff
     stemNames[1] = "bgVox";
     //beats
     stems[2]->setFile(ofFilePath::getAbsolutePath("STEMS/beats.wav"));
@@ -162,7 +168,11 @@ void testApp::update(){
             taps[i]->getSamples(audioFeatures[i]->inputBuffer);
             audioFeatures[i]->process(0);
             
-            pitchHistory[i].push_back(audioFeatures[i]->pitch);
+            medianFilter[i].push_back(audioFeatures[i]->pitch);
+            medianFilter[i].erase(medianFilter[i].begin());
+            vector<float> MFSorted = medianFilter[i];
+            ofSort(MFSorted);
+            pitchHistory[i].push_back(MFSorted[3]);
             if (pitchHistory[i].size() > ofGetWidth() - 200) pitchHistory[i].erase(pitchHistory[i].begin());
             
             

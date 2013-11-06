@@ -16,6 +16,9 @@ public:
     
     
     void setupAudio();
+    void setupVectors();
+    void loadTracks();
+    void setupAUGraph();
     void updateAudio();
     //draw analytics
     void selectMode(int track, float height);
@@ -53,6 +56,8 @@ public:
     vector<vector<float> > ampHistory;
     vector<vector<float> > dBHistory;
     vector<vector<float> > pitchHistory;
+    
+    vector<vector<float>  > medianFilter;
     
     bool setupComplete;
     int mode;
