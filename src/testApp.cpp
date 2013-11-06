@@ -39,6 +39,7 @@ void testApp::setup(){
     }
     
     mode = 1;
+    selectedTrack = -1;
     
     
     //vox
@@ -100,16 +101,9 @@ void testApp::setup(){
 
     
     //analytics
-    mindB.assign(NUMTRACKS, 0);
     maxdB.assign(NUMTRACKS, -120);
-    
-    minAmp.assign(NUMTRACKS, 10);
     maxAmp.assign(NUMTRACKS, 0);
-    
-    minfft.assign(NUMTRACKS, 10);
     maxfft.assign(NUMTRACKS, 0);
-    
-    minPitch.assign(NUMTRACKS, 1000);
     maxPitch.assign(NUMTRACKS, 0);
     
     xml.load("dataMinMax.xml");
@@ -119,19 +113,13 @@ void testApp::setup(){
     for (int i = 0; i < NUMTRACKS; i++) {
         string tag = "track-" + ofToString(i);
         xml.setTo(tag);
-        minAmp[i] = ofToFloat(xml.getValue("minAmp"));
+        
         maxAmp[i] = ofToFloat(xml.getValue("maxAmp"));
-        
-        mindB[i] = ofToFloat(xml.getValue("mindB"));
         maxdB[i] = ofToFloat(xml.getValue("maxdB"));
-        
-        minfft[i] = ofToFloat(xml.getValue("minfft"));
         maxfft[i] = ofToFloat(xml.getValue("maxfft"));
-        
-        minPitch[i] = ofToFloat(xml.getValue("minPitch"));
         maxPitch[i] = ofToFloat(xml.getValue("maxPitch"));
-        xml.setToParent();
         
+        xml.setToParent();
     }
 //    xml.addChild("root");
 //    xml.setTo("root");
@@ -148,7 +136,8 @@ void testApp::setup(){
     
     setupComplete = true;
     
-
+    gradientStart.set(100);
+    gradientEnd.set(50);
     
 }
 
@@ -158,7 +147,8 @@ void testApp::update(){
         for ( int i = 0; i < NUMTRACKS; i++ ) {
             
             //volume
-            taps[i]->getLeftWaveform(waves[i], ofGetWidth(), ofGetHeight()/3);///NUMTRACKS
+            float waveformSize = (selectedTrack == -1) ? ofGetHeight()/NUMTRACKS : ofGetHeight();
+            taps[i]->getLeftWaveform(waves[i], ofGetWidth(), waveformSize);///NUMTRACKS
             dB[i] = mixer.getInputLevel(i);
             amp[i] = taps[i]->getRMS(0);
             
@@ -216,8 +206,7 @@ void testApp::update(){
     
     //graphics
 //    float sineWave = (sin(ofGetElapsedTimef()/4) + 1) / 2;
-//    gradientStart.set(100);
-//    gradientEnd.set(50);
+
 //    
 //    if (ofGetFrameNum() % 30 == 0) shader.load("shadersGL3/shader");
 }
@@ -227,117 +216,121 @@ void testApp::draw(){
     
     ofBackgroundGradient(gradientStart, gradientEnd);
     
-    if ( setupComplete ) {
-        for ( int i = 0; i < NUMTRACKS; i++ ) {
-            ofSetColor(i * 30, 255 - i * 30, (i * 100) % 255);
-            ofPushMatrix();
-            ofTranslate( 0, ofGetHeight()/(NUMTRACKS) * i);
-            faucet.drawString(stemNames[i], 30, ofGetHeight()/NUMTRACKS);
-            
-            switch (mode) {
-                case 1:
-                    drawWaveForms(i);
-                    break;
-                    
-                case 2:
-                    drawAmpHistory(i);
-                    break;
-                
-                    
-                case 3:
-                    drawDBHistory(i);
-                    break;
-                    
-                case 4:
-                    drawFFT(i);
-                    break;
-                    
-                case 5:
-                    drawPitchHistory(i);
-                    break;
-                    
-            }
-            
-            ofPopMatrix();
-            string output = "FPS: " + ofToString(ofGetFrameRate()) + "\n"
-            + "minAmp = " + ofToString(minAmp) + "\n"
-            + "maxAmp = " + ofToString(maxAmp) + "\n"
-            + "mindB = " + ofToString(mindB) + "\n"
-            + "maxdB = " + ofToString(maxdB) + "\n"
-            + "minfft = " + ofToString(minfft) + "\n"
-            + "maxfft = " + ofToString(maxfft) + "\n"
-            + "minPitch = " + ofToString(minPitch) + "\n"
-            + "maxPitch = " + ofToString(maxPitch) + "\n";
-            faucet.drawString(output, ofGetWidth() - 480, 20);
-        }
+    ofSetColor(255);
+    faucet.drawString("all tracks", 30, 20);
+    
+    
+    for ( int i = 0; i < NUMTRACKS; i++ ) {
+        ofSetColor(i * 30, 255 - i * 30, (i * 100) % 255);
+        ofPushMatrix();
+        ofTranslate( 0, ofGetHeight()/(NUMTRACKS) * i);
+        faucet.drawString(stemNames[i], 30, ofGetHeight()/NUMTRACKS);
+        if (selectedTrack == -1) selectMode(i, ofGetHeight()/NUMTRACKS);
+        ofPopMatrix();
+    }
+    
+    if (selectedTrack != -1) {
+        int i = selectedTrack;
+        ofSetColor(i * 30, 255 - i * 30, (i * 100) % 255);
+        selectMode(i, ofGetHeight());
     }
 
-
+//    string output = "FPS: " + ofToString(ofGetFrameRate()) + "\n"
+//    + "maxAmp = " + ofToString(maxAmp) + "\n"
+//    + "maxdB = " + ofToString(maxdB) + "\n"
+//    + "maxfft = " + ofToString(maxfft) + "\n"
+//    + "maxPitch = " + ofToString(maxPitch) + "\n";
+//    faucet.drawString(output, ofGetWidth() - 480, 20);
 }
 
 //--------------------------------------------------------------
-void testApp::drawWaveForms(int track){
+void testApp::selectMode(int track, float height){
+    switch (mode) {
+        case 1:
+            drawWaveForms(track, height);
+            break;
+            
+        case 2:
+            drawAmpHistory(track, height);
+            break;
+            
+        case 3:
+            drawDBHistory(track, height);
+            break;
+            
+        case 4:
+            drawFFT(track, height);
+            break;
+            
+        case 5:
+            drawPitchHistory(track, height);
+            break;
+    }
+}
+
+//--------------------------------------------------------------
+void testApp::drawWaveForms(int track, float height){
     ofSetLineWidth(10);
     waves[track].draw();
 }
 
 //--------------------------------------------------------------
-void testApp::drawAmpHistory(int track){
+void testApp::drawAmpHistory(int track, float height){
     ofBeginShape();
     for (unsigned int j = 0; j < ampHistory[track].size(); j++){
-        if( j == 0 ) ofVertex(j + 100, ofGetHeight()/NUMTRACKS);
-        float ampNormalized = ofMap(ampHistory[track][j], minAmp[track], maxAmp[track], 0.0, 1.0);
-        ofVertex(j + 100, ofGetHeight()/(NUMTRACKS) - ampNormalized * ofGetHeight()/(NUMTRACKS));
+        if( j == 0 ) ofVertex(j + 100, height);
+        float ampNormalized = ofMap(ampHistory[track][j], 0, maxAmp[track], 0.0, 1.0);
+        ofVertex(j + 100, height - ampNormalized * height);
         
-        if( j == ampHistory[track].size() -1 ) ofVertex(j + 100, ofGetHeight()/NUMTRACKS);
+        if( j == ampHistory[track].size() -1 ) ofVertex(j + 100, height);
     }
     ofEndShape(false);
     
-    float ampNormalized = ofMap(amp[track], minAmp[track], maxAmp[track], 0.0, 1.0);
-    float size = ampNormalized * ofGetHeight()/(NUMTRACKS);
-    ofCircle(ofGetWidth() - 50, ofGetHeight()/NUMTRACKS - size / 2, size/2);
+    float ampNormalized = ofMap(amp[track], 0, maxAmp[track], 0.0, 1.0);
+    float size = ampNormalized * height;
+    ofCircle(ofGetWidth() - 50, height - size / 2, size/2);
 }
 
 //--------------------------------------------------------------
-void testApp::drawDBHistory(int track){
+void testApp::drawDBHistory(int track, float height){
     ofBeginShape();
     for (unsigned int j = 0; j < dBHistory[track].size(); j++){
-        if( j == 0 ) ofVertex(j + 100, ofGetHeight()/NUMTRACKS);
-        float dBNormalized = ofMap(dBHistory[track][j], mindB[track], maxdB[track], 0.0, 1.0);
-        ofVertex(j + 100, ofGetHeight()/(NUMTRACKS) - dBNormalized * ofGetHeight()/(NUMTRACKS));
+        if( j == 0 ) ofVertex(j + 100, height);
+        float dBNormalized = ofMap(dBHistory[track][j], -120, maxdB[track], 0.0, 1.0);
+        ofVertex(j + 100, height - dBNormalized * height);
         
-        if( j == dBHistory[track].size() -1 ) ofVertex(j + 100, ofGetHeight()/NUMTRACKS);
+        if( j == dBHistory[track].size() -1 ) ofVertex(j + 100, height);
     }
     ofEndShape(false);
     
-    float dBNormalized = ofMap(dB[track], mindB[track], maxdB[track], 0.0, 1.0);
-    float size = dBNormalized * ofGetHeight()/(NUMTRACKS+1);
-    ofCircle(ofGetWidth() - 50, ofGetHeight()/NUMTRACKS - size / 2, size/2);
+    float dBNormalized = ofMap(dB[track], -120, maxdB[track], 0.0, 1.0);
+    float size = dBNormalized * height;
+    ofCircle(ofGetWidth() - 50, height - size / 2, size/2);
 }
 
 //--------------------------------------------------------------
-void testApp::drawFFT(int track){
+void testApp::drawFFT(int track, float height){
     ofBeginShape();
     for (unsigned int j = 0; j < audioFeatures[track]->spectrum.size(); j++){
         int x = (float)j / audioFeatures[track]->spectrum.size() * (ofGetWidth()-100) + 100;
         
-        if( j == 0 ) ofVertex(x, ofGetHeight()/NUMTRACKS);
+        if( j == 0 ) ofVertex(x, height);
         
-        float binNormalized = ofMap(audioFeatures[track]->spectrum[j], minfft[track], maxfft[track], 0.0, 1.0);
-        ofVertex(x, ofGetHeight()/NUMTRACKS - binNormalized * ofGetHeight()/NUMTRACKS);
+        float binNormalized = ofMap(audioFeatures[track]->spectrum[j], 0, maxfft[track], 0.0, 1.0);
+        ofVertex(x, height - binNormalized * height);
         
-        if( j == audioFeatures[track]->spectrum.size() -1 ) ofVertex(x, ofGetHeight()/NUMTRACKS);
+        if( j == audioFeatures[track]->spectrum.size() -1 ) ofVertex(x, height);
     }
     ofEndShape(false);
 }
 
 //--------------------------------------------------------------
-void testApp::drawPitchHistory(int track){
+void testApp::drawPitchHistory(int track, float height){
     ofNoFill();
     ofBeginShape();
     for (unsigned int j = 0; j < pitchHistory[track].size(); j++){
-        float pitchNormalized = ofMap(pitchHistory[track][j], minPitch[track], maxPitch[track], 0.0, 1.0);
-        ofVertex(j + 100, ofGetHeight()/NUMTRACKS - pitchNormalized * ofGetHeight()/NUMTRACKS);
+        float pitchNormalized = ofMap(pitchHistory[track][j], 0, maxPitch[track], 0.0, 1.0);
+        ofVertex(j + 100, height - pitchNormalized * height);
     }
     ofEndShape(false);
     ofFill();
@@ -382,13 +375,9 @@ void testApp::keyPressed(int key){
                 string tag = "track-" + ofToString(i);
                 track.addChild(tag);
                 track.setTo(tag);
-                track.addValue("minAmp", minAmp[i]);
                 track.addValue("maxAmp", maxAmp[i]);
-                track.addValue("mindB", mindB[i]);
                 track.addValue("maxdB", maxdB[i]);
-                track.addValue("minfft", minfft[i]);
                 track.addValue("maxfft", maxfft[i]);
-                track.addValue("minPitch", minPitch[i]);
                 track.addValue("maxPitch", maxPitch[i]);
                 
                 xml.addXml(track);
@@ -417,7 +406,17 @@ void testApp::mouseDragged(int x, int y, int button){
 
 //--------------------------------------------------------------
 void testApp::mousePressed(int x, int y, int button){
-
+    if (x < 100) {
+        float height = ofGetHeight() / NUMTRACKS;
+        if ( y < 20 ) selectedTrack = -1;
+        else if ( y > 20 && y < height) selectedTrack = 0;
+        else if ( y > height && y < height * 2) selectedTrack = 1;
+        else if ( y > height * 2 && y < height * 3) selectedTrack = 2;
+        else if ( y > height * 3 && y < height * 4) selectedTrack = 3;
+        else if ( y > height * 4 && y < height * 5) selectedTrack = 4;
+        else if ( y > height * 5 && y < height * 6) selectedTrack = 5;
+        else if ( y > height * 6 && y < height * 7) selectedTrack = 6;
+    }
 }
 
 //--------------------------------------------------------------

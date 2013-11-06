@@ -14,11 +14,18 @@ public:
     void update();
     void draw();
     
-    void drawWaveForms(int track);
-    void drawAmpHistory(int track);
-    void drawDBHistory(int track);
-    void drawFFT(int track);
-    void drawPitchHistory(int track);
+    
+    void setupAudio();
+    void updateAudio();
+    //draw analytics
+    void selectMode(int track, float height);
+    void drawWaveForms(int track, float height);
+    void drawAmpHistory(int track, float height);
+    void drawDBHistory(int track, float height);
+    void drawFFT(int track, float height);
+    void drawPitchHistory(int track, float height);
+    
+    
 
     void keyPressed(int key);
     void keyReleased(int key);
@@ -48,24 +55,22 @@ public:
     vector<vector<float> > pitchHistory;
     
     bool setupComplete;
-    
-    
-    ofTrueTypeFont faucet;
-
     int mode;
-    
-    //
+    int selectedTrack;
+    //graphics
     ofColor gradientStart, gradientEnd;
     ofShader shader;
     ofFbo fbo;
     
     
     //analytics
-    vector <float> mindB, maxdB, minAmp, maxAmp, minfft, maxfft, minPitch, maxPitch;
-
-    float mindBGlobal, maxdBGlobal, minAmpGlobal, maxAmpGlobal, minfftGlobal, maxfftGlobal, minPitchGlobal, maxPitchGlobal;
+    vector <float> maxdB, maxAmp, maxfft, maxPitch;
+    float maxdBGlobal, maxAmpGlobal, maxfftGlobal, maxPitchGlobal;
     //xml
     ofXml xml;
+    
+    
+    ofTrueTypeFont faucet;
     
     
 };
